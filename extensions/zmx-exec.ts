@@ -55,10 +55,17 @@ export default async function (pi: ExtensionAPI) {
 		args: string[],
 		options?: { timeout?: number },
 	): Promise<{ stdout: string; stderr: string; code: number }> {
+		const timeout = options?.timeout ?? 30;
 		try {
-			const result = await pi.exec("zmx", args, {
-				timeout: (options?.timeout ?? 30) * 1000,
-			});
+			const result = await pi.exec("zmx", args, { timeout: timeout * 1000 });
+			// A timed-out exec resolves with code 0 and killed set.
+			if (result.killed) {
+				return {
+					stdout: (result.stdout ?? "").trim(),
+					stderr: `zmx ${args[0]} timed out after ${timeout}s; the task may still be running in the session`,
+					code: -1,
+				};
+			}
 			return {
 				stdout: (result.stdout ?? "").trim(),
 				stderr: (result.stderr ?? "").trim(),
