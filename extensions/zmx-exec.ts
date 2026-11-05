@@ -25,7 +25,9 @@ import { Type } from "typebox";
 export default async function (pi: ExtensionAPI) {
 	// Verify zmx is available on PATH
 	try {
-		await pi.exec("zmx", ["version"]);
+		const { code } = await pi.exec("zmx", ["version"]);
+		// pi.exec resolves with a non-zero code when the binary is missing.
+		if (code !== 0) throw new Error("zmx unavailable");
 	} catch {
 		const msg =
 			"zmx not found on PATH. Install from https://zmx.sh :\n" +
